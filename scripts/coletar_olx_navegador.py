@@ -2,7 +2,9 @@
 no computador do João, com ritmo de pessoa. Só lê. Se a OLX pedir verificação ou bloquear, PARA:
 não tenta contornar.
 
-Uso:  python scripts/coletar_olx_navegador.py [--paginas 2]
+Uso:  python scripts/coletar_olx_navegador.py [--paginas 2] [--detalhes]
+      --detalhes: no fim, abre os anúncios novos de PC e grava data/olx_detalhes_AAAA-MM-DD.csv
+      (ver scripts/detalhar_olx_navegador.py)
 Saída: data/olx_AAAA-MM-DD.csv  (data, busca, categoria_busca, titulo, preco, cidade, uf, publicado, link)
 """
 import argparse, csv, datetime as dt, json, os, random, re, sys, time
@@ -50,6 +52,8 @@ def ads_do_rsc(html):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--paginas", type=int, default=2)
+    ap.add_argument("--detalhes", action="store_true",
+                    help="depois da coleta, abre os anúncios novos de PC e lê descrição e atributos")
     args = ap.parse_args()
     hoje = dt.date.today().isoformat()
     os.makedirs("data", exist_ok=True)
@@ -85,8 +89,15 @@ def main():
                                    loc.get("municipality"), loc.get("uf"), a.get("date") or a.get("origListTime"), link])
                 print(f"[{busca}] página {n}: {len(ads)} anúncios")
                 time.sleep(random.uniform(6, 10))  # ritmo de pessoa; não reduzir
+        gravar(saida, linhas)
+        if args.detalhes:
+            # mesmo navegador e mesmo ritmo; para sozinho se a OLX bloquear
+            from detalhar_olx_navegador import detalhar
+            time.sleep(random.uniform(6, 10))
+            _, bloqueado = detalhar(pag, saida)
+            if bloqueado:
+                nav.close(); sys.exit(2)
         nav.close()
-    gravar(saida, linhas)
 
 def gravar(saida, linhas):
     with open(saida, "w", newline="", encoding="utf-8") as f:
