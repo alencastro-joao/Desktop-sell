@@ -4,6 +4,9 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 
+# Planilha "Revenda de PCs" no Drive do João
+SHEET_ID_PADRAO = "1pv_HIJKkv-p8HOKNOEPAFi1qEz7aEpgKIvDK61hdFGk"
+
 def excel(abas: dict, caminho="saida/revenda.xlsx"):
     os.makedirs(os.path.dirname(caminho), exist_ok=True)
     wb = Workbook(); wb.remove(wb.active)
@@ -22,7 +25,7 @@ def excel(abas: dict, caminho="saida/revenda.xlsx"):
 
 def google_sheets(abas: dict):
     """Precisa de GOOGLE_SERVICE_ACCOUNT_JSON e SHEET_ID. A aba 'Parametros' nunca é sobrescrita."""
-    cred, sid = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"), os.getenv("SHEET_ID")
+    cred, sid = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"), os.getenv("SHEET_ID") or SHEET_ID_PADRAO
     if not (cred and sid):
         print("[Sheets] não configurado; pulando"); return None
     import gspread
@@ -36,12 +39,10 @@ def google_sheets(abas: dict):
         ws.clear()
         if linhas:
             ws.update(linhas, value_input_option="USER_ENTERED")
-            ws.format("1:1", {"textFormat": {"bold": True}})
-            ws.freeze(rows=1)
     return sh.url
 
 def ler_parametros(padrao: dict):
-    cred, sid = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"), os.getenv("SHEET_ID")
+    cred, sid = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"), os.getenv("SHEET_ID") or SHEET_ID_PADRAO
     p = dict(padrao)
     if not (cred and sid):
         return p
@@ -53,7 +54,10 @@ def ler_parametros(padrao: dict):
         ws = sh.add_worksheet("Parametros", rows=30, cols=3)
         ws.update([["parametro", "valor"]] + [[k, v] for k, v in padrao.items()])
         return p
-    for k, v in ws.get_all_values()[1:]:
+    for linha in ws.get_all_values()[1:]:
+        if len(linha) < 2:
+            continue
+        k, v = linha[0], linha[1]
         if k in p:
             try: p[k] = type(p[k])(str(v).replace(",", "."))
             except ValueError: pass

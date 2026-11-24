@@ -61,18 +61,25 @@ def rodar(paginas, saida_excel):
     precos, aba_pecas = precos_pecas(1)
 
     vistos, candidatos = set(), []
+    sobre = [["data", "fonte", "termo", "anuncios_lidos", "descartados_como_ruido"]]
     for q in BUSCAS_COMPRA:
+        cont = {}
         for a in coletores.buscar(q, paginas):
-            if a["id"] in vistos or PALAVRAS_RUINS.search(a["titulo"] or ""):
+            c = cont.setdefault(a["fonte"], [0, 0]); c[0] += 1
+            if PALAVRAS_RUINS.search(a["titulo"] or ""):
+                c[1] += 1; continue
+            if a["id"] in vistos:
                 continue
             vistos.add(a["id"]); candidatos.append(a)
+        for fonte, (n, ruido) in cont.items():
+            sobre.append([dt.date.today().isoformat(), fonte, q, n, ruido])
 
     comparaveis = [["busca", "fonte", "titulo", "preco", "cpu", "gpu", "ram_gb", "link"]]
     cab = ["data", "fonte", "titulo", "preco_compra", "cidade", "uf", "cpu", "ram_gb", "ram_tipo", "gpu_atual",
            "ssd", "fonte_w", "monitor", "upgrade_sugerido", "custo_pecas", "fretes", "custo_total",
            "revenda_p25", "revenda_mediana", "revenda_p75", "n_comparaveis",
            "lucro_p25", "lucro_mediana", "lucro_p75", "margem_mediana_%",
-           f"preco_venda_rapida (-{params['desconto_venda_rapida_pct']}%)", "vale_a_pena", "link"]
+           "preco_venda_rapida", "vale_a_pena", "link"]
     linhas = []
     hoje = dt.date.today().isoformat()
     for a in candidatos:
@@ -99,7 +106,7 @@ def rodar(paginas, saida_excel):
                        av["lucro_p25"], av["lucro_p50"], av["lucro_p75"], av["margem_p50"],
                        round(rapida), "SIM" if av["vale_a_pena"] else "não", a["url"]])
     linhas.sort(key=lambda l: l[22] or -1e9, reverse=True)
-    abas = {"Oportunidades": [cab] + linhas, "Pecas": aba_pecas, "Comparaveis": comparaveis}
+    abas = {"Oportunidades": [cab] + linhas, "Pecas": aba_pecas, "Comparaveis": comparaveis, "Sobre a busca": sobre}
     print(f"{len(candidatos)} anúncios, {len(linhas)} avaliados, {sum(1 for l in linhas if l[26]=='SIM')} oportunidades")
     print("Excel:", saida.excel(abas, saida_excel))
     print("Sheets:", saida.google_sheets(abas))

@@ -22,7 +22,7 @@ Excel e Google Sheets.
 |---|---|
 | `ML_CLIENT_ID`, `ML_CLIENT_SECRET` | app em developers.mercadolivre.com.br (a busca do ML exige token) |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | JSON da conta de serviço do Google com acesso à planilha |
-| `SHEET_ID` | id da planilha (trecho da URL entre `/d/` e `/edit`) |
+| `SHEET_ID` | opcional; o padrão já é a planilha "Revenda de PCs" |
 
 Sem os segredos do Google, só o Excel é gerado.
 
