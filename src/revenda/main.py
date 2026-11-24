@@ -62,6 +62,11 @@ def rodar(paginas, saida_excel):
 
     vistos, candidatos = set(), []
     sobre = [["data", "fonte", "termo", "anuncios_lidos", "descartados_como_ruido"]]
+    # Anúncios colados à mão na planilha entram sempre, sem filtro de ruído.
+    for a in saida.ler_anuncios_manuais():
+        vistos.add(a["id"]); candidatos.append(a)
+    if candidatos:
+        sobre.append([dt.date.today().isoformat(), "Manual", "aba Anuncios manuais", len(candidatos), 0])
     for q in BUSCAS_COMPRA:
         cont = {}
         for a in coletores.buscar(q, paginas):

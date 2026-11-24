@@ -62,3 +62,27 @@ def ler_parametros(padrao: dict):
             try: p[k] = type(p[k])(str(v).replace(",", "."))
             except ValueError: pass
     return p
+
+
+def ler_anuncios_manuais():
+    """Lê a aba 'Anuncios manuais' (link, titulo, preco, descricao, cidade, uf). Nunca é sobrescrita."""
+    cred, sid = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"), os.getenv("SHEET_ID") or SHEET_ID_PADRAO
+    if not cred:
+        return []
+    import gspread
+    sh = gspread.service_account_from_dict(json.loads(cred)).open_by_key(sid)
+    try:
+        linhas = sh.worksheet("Anuncios manuais").get_all_values()[1:]
+    except gspread.WorksheetNotFound:
+        return []
+    out = []
+    for l in linhas:
+        l = (l + [""] * 6)[:6]
+        link, titulo, preco, desc, cidade, uf = l
+        preco = preco.replace("R$", "").replace(".", "").replace(",", ".").strip()
+        if not link or not preco:
+            continue
+        fonte = "OLX (manual)" if "olx.com.br" in link else "Manual"
+        out.append({"fonte": fonte, "id": link.split("?")[0], "titulo": titulo or link, "preco": float(preco),
+                    "url": link.split("?")[0], "cidade": cidade, "uf": uf, "texto": f"{titulo} {desc}"})
+    return out

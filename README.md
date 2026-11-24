@@ -13,6 +13,7 @@ Excel e Google Sheets.
 | Aba | Conteúdo |
 |---|---|
 | Oportunidades | cada PC, peças identificadas, melhor upgrade, custo total, revenda P25/mediana/P75, lucro, margem, "vale a pena" |
+| Anuncios manuais | cole aqui link, título, preço e descrição de anúncios que você achou (OLX ou outro); entram em toda execução |
 | Pecas | mediana de preço de cada peça, nova e usada |
 | Comparaveis | anúncios usados para estimar a revenda |
 | Parametros | margem mínima, lucro mínimo, fretes, desconto de venda rápida, taxa de venda (só no Google Sheets; edite lá) |
