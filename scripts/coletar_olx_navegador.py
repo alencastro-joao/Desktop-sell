@@ -33,6 +33,20 @@ def achar_ads(node):
                 return r
     return []
 
+def ads_do_rsc(html):
+    """Layout novo (Next.js App Router, nov/2026): sem __NEXT_DATA__; a lista vem no payload
+    self.__next_f.push([1,"..."]). Junta os pedaços e lê o primeiro array "ads":[...]."""
+    pedacos = re.findall(r'self\.__next_f\.push\(\[1,("(?:[^"\\]|\\.)*")\]\)', html, re.S)
+    txt = "".join(json.loads(p) for p in pedacos)
+    i = txt.find('"ads":[')
+    if i < 0:
+        return []
+    try:
+        ads, _ = json.JSONDecoder().raw_decode(txt, i + len('"ads":'))
+    except ValueError:
+        return []
+    return [a for a in ads if isinstance(a, dict) and a.get("listId")]
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--paginas", type=int, default=2)
@@ -56,7 +70,7 @@ def main():
                     print(f"PAREI: a OLX pediu verificação ou bloqueou em '{busca}' (status {resp.status if resp else '?'}). Nada foi contornado.")
                     nav.close(); gravar(saida, linhas); sys.exit(2)
                 m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html, re.S)
-                ads = achar_ads(json.loads(m.group(1))) if m else []
+                ads = achar_ads(json.loads(m.group(1))) if m else ads_do_rsc(html)
                 if not ads:
                     print(f"[{busca}] página {n}: nenhum anúncio lido (layout mudou ou fim da lista)")
                     break
