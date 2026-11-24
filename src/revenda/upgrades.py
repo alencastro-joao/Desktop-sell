@@ -1,4 +1,5 @@
 """Gera combinações de upgrade para um PC e calcula custo, revenda e retorno."""
+import re
 from itertools import product
 from . import config
 from .parser import Specs
@@ -10,7 +11,9 @@ def _preco(peca, precos, condicao):
 def opcoes(specs: Specs, precos: dict, condicao="usado"):
     """Retorna lista de planos [{itens:[(nome,preco)], gpu_resultante, ram_resultante}]."""
     gpus = [None]
-    if not specs.gpu:
+    # Placas de entrada (GT 710/730/1030 etc.) não seguram jogo: tratamos como "sem GPU" e a trocamos.
+    gpu_fraca = bool(specs.gpu and re.match(r"GT \d", specs.gpu))
+    if not specs.gpu or gpu_fraca:
         limite = specs.cpu_tier + config.GARGALO_FOLGA
         gpus += [g for g in config.GPUS if g["tier"] <= limite] or [config.GPUS[0]]
     ram_opts = [0]
@@ -35,7 +38,7 @@ def opcoes(specs: Specs, precos: dict, condicao="usado"):
             itens.append((config.WINDOWS["nome"], config.WINDOWS["novo"]))
         planos.append({
             "itens": itens,
-            "gpu": gpu["nome"] if gpu else specs.gpu,
+            "gpu": gpu["nome"] if gpu else (None if gpu_fraca else specs.gpu),
             "ram_gb": (specs.ram_gb or 0) + ram_add,
             "ssd": specs.ssd or ssd,
         })
